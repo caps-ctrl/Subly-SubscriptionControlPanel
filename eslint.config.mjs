@@ -12,6 +12,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Public assets / vendor bundles:
+    "public/logos/AI Subscription Manager_files/**",
   ]),
 ]);
 

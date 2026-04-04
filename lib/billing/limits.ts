@@ -1,0 +1,2 @@
+export const FREE_ACTIVE_SUBSCRIPTIONS_LIMIT = 3;
+

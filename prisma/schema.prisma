@@ -1,0 +1,186 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Plan {
+  FREE
+  PRO
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  PAUSED
+  CANCELED
+}
+
+enum BillingInterval {
+  WEEKLY
+  MONTHLY
+  QUARTERLY
+  YEARLY
+  UNKNOWN
+}
+
+enum SubscriptionSource {
+  MANUAL
+  GMAIL
+}
+
+enum NotificationType {
+  UPCOMING_PAYMENT
+}
+
+enum NotificationChannel {
+  EMAIL
+}
+
+model User {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  passwordHash String
+  plan         Plan     @default(FREE)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  gmailAccounts     GmailAccount[]
+  subscriptions     Subscription[]
+  gmailMessageScans GmailMessageScan[]
+  cancellationGuides CancellationGuide[]
+  notificationLogs  NotificationLog[]
+  UserSubscriptions UserSubscription[]
+  refreshTokens     RefreshToken[]
+}
+
+model RefreshToken {
+  id                String   @id @default(uuid())
+  userId            String
+  tokenHash         String   @unique
+  tokenUsed         Boolean  @default(false)
+  expiresAt         DateTime
+  revokedAt         DateTime?
+  replacedByTokenId String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  user            User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  replacedByToken RefreshToken? @relation("RefreshTokenRotation", fields: [replacedByTokenId], references: [id], onDelete: SetNull)
+  previousTokens  RefreshToken[] @relation("RefreshTokenRotation")
+
+  @@index([userId])
+  @@index([userId, revokedAt])
+  @@index([expiresAt])
+}
+
+model GmailAccount {
+  id                   String   @id @default(uuid())
+  userId               String
+  gmailAddress         String
+  encryptedRefreshToken String
+  encryptedAccessToken String?
+  accessTokenExpiresAt DateTime?
+  scopes               String
+  lastHistoryId         String?
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, gmailAddress])
+  @@index([userId])
+}
+
+model Subscription {
+  id             String             @id @default(uuid())
+  userId         String
+  providerName   String
+  status         SubscriptionStatus @default(ACTIVE)
+  amountCents    Int
+  currency       String             @default("USD")
+  billingInterval BillingInterval    @default(UNKNOWN)
+  nextBillingDate DateTime?
+  lastBilledAt   DateTime?
+  source         SubscriptionSource @default(MANUAL)
+  notes          String?
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
+
+  user              User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  cancellationGuides CancellationGuide[]
+  notificationLogs  NotificationLog[]
+
+  @@index([userId])
+  @@index([userId, status])
+}
+
+model GmailMessageScan {
+  id            String   @id @default(uuid())
+  userId        String
+  gmailMessageId String
+  gmailThreadId  String?
+  fromEmail     String?
+  subject       String?
+  snippet       String?
+  internalDate  DateTime?
+  extracted     Json?
+  processedAt   DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, gmailMessageId])
+  @@index([userId])
+}
+
+model CancellationGuide {
+  id             String   @id @default(uuid())
+  userId         String
+  subscriptionId String
+  model          String
+  guide          Json
+  createdAt      DateTime @default(now())
+
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  subscription Subscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([subscriptionId])
+}
+
+model NotificationLog {
+  id             String              @id @default(uuid())
+  userId         String
+  subscriptionId String
+  type           NotificationType
+  channel        NotificationChannel
+  dedupeKey      String
+  sentAt         DateTime            @default(now())
+
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  subscription Subscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+
+  @@unique([dedupeKey])
+  @@index([userId])
+  @@index([subscriptionId])
+}
+
+model UserSubscription {
+  id String @id @default(uuid())
+
+  userId String
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  stripeCustomerId     String
+  stripeSubscriptionId String @unique
+
+  status String
+  currentPeriodEnd DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+}

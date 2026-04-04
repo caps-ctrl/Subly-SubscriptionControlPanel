@@ -1,0 +1,33 @@
+import { forwardRef, type ButtonHTMLAttributes } from "react";
+
+type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
+  variant?: "primary" | "secondary" | "ghost" | "cta" | "cta1";
+};
+
+export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
+  ({ className = "", variant = "primary", ...props }, ref) => {
+    const base =
+      "inline-flex items-center justify-center rounded-xl px-4 py-2 text-sm font-medium transition-colors disabled:opacity-50 disabled:pointer-events-none";
+
+    const styles =
+      variant === "primary"
+        ? "bg-black text-white hover:bg-zinc-800 dark:bg-white dark:text-black dark:hover:bg-zinc-200"
+        : variant === "secondary"
+          ? "bg-zinc-100 text-zinc-900 hover:bg-zinc-200 dark:bg-zinc-900 dark:text-zinc-50 dark:hover:bg-zinc-800"
+          : variant === "ghost"
+            ? "bg-transparent text-zinc-900 hover:bg-zinc-100 dark:text-zinc-50 dark:hover:bg-zinc-900"
+            : variant === "cta"
+              ? "hover:bg-indigo-700 active:bg-indigo-800 bg-transparent text-black hover:text-white border border-indigo-700 text-sm font-semibold rounded-xl px-4 py-2 transition-colors"
+              : "bg-indigo-700 active:bg-indigo-800 bg-transparent text-black hover:text-white border border-indigo-700 text-sm font-semibold rounded-xl px-4 py-2 transition-colors";
+
+    return (
+      <button
+        ref={ref}
+        className={`${base} ${styles} ${className}`}
+        {...props}
+      />
+    );
+  },
+);
+
+Button.displayName = "Button";
