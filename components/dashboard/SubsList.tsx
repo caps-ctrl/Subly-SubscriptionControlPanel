@@ -239,7 +239,7 @@ export default function SubsList({
           }}
           className="fixed inset-0 z-20 bg-black/40 flex items-center justify-center"
         >
-          <div className="bg-white z-21 flex flex-col  space-y-4 min-w-[30vw] p-6 rounded-2xl ">
+          <div className="bg-white dark:bg-black z-21 flex flex-col  space-y-4 min-w-[30vw] p-6 rounded-2xl ">
             <h3 className="font-semibold">Dodaj subskrypcję</h3>
 
             <input
@@ -272,7 +272,7 @@ export default function SubsList({
 
             <button
               onClick={handleAdd}
-              className="w-full bg-black text-white py-2 rounded"
+              className="w-full bg-black dark:border rounded-2xl text-white py-2 rounded"
             >
               Dodaj
             </button>

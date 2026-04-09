@@ -80,9 +80,9 @@ export function ChangePasswordButton() {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ currentPassword, newPassword }),
       });
-      const data = (await response.json().catch(() => null)) as
-        | { error?: string }
-        | null;
+      const data = (await response.json().catch(() => null)) as {
+        error?: string;
+      } | null;
 
       if (!response.ok) {
         setError(getErrorMessage(data?.error));
@@ -119,7 +119,10 @@ export function ChangePasswordButton() {
 
       {open ? (
         <Modal title="Zmień hasło" onClose={closeModal}>
-          <form onSubmit={onSubmit} className="space-y-4">
+          <form
+            onSubmit={onSubmit}
+            className="space-y-4 fixed top-1/2 left-1/2 w-full max-w-md -translate-x-1/2 -translate-y-1/2 rounded-xl bg-white p-6 shadow-lg backdrop-blur-xl border border-zinc-200 dark:bg-zinc-950 dark:border-zinc-800"
+          >
             <div className="space-y-2">
               <label className="text-sm font-medium">Obecne hasło</label>
               <Input

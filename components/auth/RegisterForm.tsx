@@ -1,15 +1,25 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useState, type FormEvent } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useMemo, useState, type FormEvent } from "react";
 
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
+import { normalizeRedirectPath } from "@/lib/auth/normalizeRedirectPath";
 
 export function RegisterForm() {
   const router = useRouter();
+  const params = useSearchParams();
+  const next = useMemo(
+    () => normalizeRedirectPath(params.get("next"), "/dashboard"),
+    [params],
+  );
+  const loginHref =
+    next === "/dashboard"
+      ? "/login"
+      : `/login?next=${encodeURIComponent(next)}`;
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -26,14 +36,14 @@ export function RegisterForm() {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ email, password }),
       });
-      const data = (await res.json().catch(() => null)) as
-        | { error?: string }
-        | null;
+      const data = (await res.json().catch(() => null)) as {
+        error?: string;
+      } | null;
       if (!res.ok) {
         setError(data?.error ?? "REGISTER_FAILED");
         return;
       }
-      router.push("/dashboard");
+      router.push(next);
       router.refresh();
     } finally {
       setLoading(false);
@@ -41,11 +51,9 @@ export function RegisterForm() {
   }
 
   return (
-    <Card className="w-full max-w-md">
+    <Card className="w-full p-6 border border-black dark:border-white max-w-md">
       <div className="mb-6">
-        <h1 className="text-2xl font-semibold tracking-tight">
-          Utwórz konto
-        </h1>
+        <h1 className="text-2xl font-semibold tracking-tight">Utwórz konto</h1>
         <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
           Wersja Free pozwala śledzić do 3 subskrypcji.
         </p>
@@ -89,7 +97,7 @@ export function RegisterForm() {
 
         <p className="text-sm text-zinc-600 dark:text-zinc-400">
           Masz już konto?{" "}
-          <Link href="/login" className="font-medium underline">
+          <Link href={loginHref} className="font-medium underline">
             Zaloguj się
           </Link>
         </p>

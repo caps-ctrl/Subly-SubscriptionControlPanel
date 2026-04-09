@@ -1,8 +1,20 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { Button } from "../ui/Button";
 
-export default function Pricing() {
+type PricingProps = {
+  user: {
+    plan: "FREE" | "PRO";
+  } | null;
+};
+
+export default function Pricing({ user }: PricingProps) {
+  const router = useRouter();
+  const isPro = user?.plan === "PRO";
+  const freeLabel = user ? "Przejdź do dashboardu" : "Zacznij za darmo";
+  const premiumLabel = isPro ? "Masz już Premium" : "Kup Premium";
+
   return (
     <section className="py-20 px-6 bg-white dark:bg-black text-zinc-900 dark:text-white">
       <div className="max-w-6xl mx-auto text-center mb-16">
@@ -30,8 +42,12 @@ export default function Pricing() {
             </ul>
           </div>
 
-          <Button variant="secondary" className="mt-8">
-            Zacznij za darmo
+          <Button
+            variant="secondary"
+            className="mt-8"
+            onClick={() => router.push(user ? "/dashboard" : "/register")}
+          >
+            {freeLabel}
           </Button>
         </div>
 
@@ -63,8 +79,12 @@ export default function Pricing() {
             </ul>
           </div>
 
-          <Button variant="cta" className="mt-8 text-base py-3">
-            Zarejestruj się
+          <Button
+            variant="cta"
+            className="mt-8 text-base py-3"
+            onClick={() => router.push(isPro ? "/dashboard" : "/checkout")}
+          >
+            {premiumLabel}
           </Button>
         </div>
       </div>

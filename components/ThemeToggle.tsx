@@ -13,13 +13,22 @@ function getSystemPrefersDark() {
   return window.matchMedia?.("(prefers-color-scheme: dark)")?.matches ?? false;
 }
 
-function applyTheme(mode: ThemeMode) {
-  const isDark =
-    mode === "dark" || (mode === "system" && getSystemPrefersDark());
-  document.documentElement.classList.toggle("dark", isDark);
-  document.documentElement.dataset.theme = mode;
+function getThemeFromCookie(): ThemeMode | undefined {
+  const match = document.cookie.match(/(?:^|; )theme=(light|dark|system)/);
+  return match ? (match[1] as ThemeMode) : undefined;
 }
 
+function applyTheme(mode: ThemeMode) {
+  const cookieTheme = getThemeFromCookie();
+
+  const finalMode = cookieTheme ?? mode;
+
+  const isDark =
+    finalMode === "dark" || (finalMode === "system" && getSystemPrefersDark());
+
+  document.documentElement.classList.toggle("dark", isDark);
+  document.documentElement.dataset.theme = finalMode;
+}
 function readMode(): ThemeMode {
   const fromDom = document.documentElement.dataset.theme;
   if (fromDom === "light" || fromDom === "dark") return fromDom;

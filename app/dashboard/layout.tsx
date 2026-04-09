@@ -25,11 +25,14 @@ export default async function DashboardLayout({
         <div className="fixed top-0 left-0 ">
           <aside className="min-h-screen   max-w-50 border-r border-zinc-200 flex flex-col justify-between bg-zinc-200  shadow-sm backdrop-blur dark:border-zinc-800 dark:bg-zinc-950/70 lg:sticky lg:top-6 lg:h-[calc(100vh-3rem)] lg:self-start">
             <div>
-              <div className="flex items-center justify-center     p-5 ">
+              <Link href="/">
                 {" "}
-                <img src="/logo.png" alt="Logo" className="h-10 w-10" />
-                <h1 className="text-2xl mr-10 font-bold">ubly</h1>
-              </div>
+                <div className="flex items-center justify-center     p-5 ">
+                  {" "}
+                  <img src="/logo.png" alt="Logo" className="h-10 w-10" />
+                  <h1 className="text-2xl mr-10 font-bold">ubly</h1>
+                </div>{" "}
+              </Link>
               <DashboardNav />
             </div>
 

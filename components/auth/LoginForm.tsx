@@ -7,11 +7,19 @@ import { useMemo, useState, type FormEvent } from "react";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
+import { normalizeRedirectPath } from "@/lib/auth/normalizeRedirectPath";
 
 export function LoginForm() {
   const router = useRouter();
   const params = useSearchParams();
-  const next = useMemo(() => params.get("next") ?? "/dashboard", [params]);
+  const next = useMemo(
+    () => normalizeRedirectPath(params.get("next"), "/dashboard"),
+    [params],
+  );
+  const registerHref =
+    next === "/dashboard"
+      ? "/register"
+      : `/register?next=${encodeURIComponent(next)}`;
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -28,9 +36,9 @@ export function LoginForm() {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ email, password }),
       });
-      const data = (await res.json().catch(() => null)) as
-        | { error?: string }
-        | null;
+      const data = (await res.json().catch(() => null)) as {
+        error?: string;
+      } | null;
       if (!res.ok) {
         setError(data?.error ?? "LOGIN_FAILED");
         return;
@@ -43,8 +51,8 @@ export function LoginForm() {
   }
 
   return (
-    <Card className="w-full max-w-md">
-      <div className="mb-6">
+    <Card className="w-full p-6 border border-black dark:border-white max-w-md">
+      <div className="mb-6 ">
         <h1 className="text-2xl font-semibold tracking-tight">
           AI Subscription Manager
         </h1>
@@ -90,7 +98,7 @@ export function LoginForm() {
 
         <p className="text-sm text-zinc-600 dark:text-zinc-400">
           Nie masz konta?{" "}
-          <Link href="/register" className="font-medium underline">
+          <Link href={registerHref} className="font-medium underline">
             Zarejestruj się
           </Link>
         </p>

@@ -91,7 +91,7 @@ export default async function HomePage() {
         <ProblemS />
       </section>
       <section>
-        <Pricing />
+        <Pricing user={user ? { plan: user.plan } : null} />
       </section>
       <Footer />
     </>

@@ -3,20 +3,9 @@
 import { useEffect, useEffectEvent } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { fetchWithAuth } from "@/lib/auth/fetchWithAuth";
+import { normalizeRedirectPath } from "@/lib/auth/normalizeRedirectPath";
 
 const SESSION_SYNC_INTERVAL_MS = 60 * 1000;
-
-function normalizeRedirectPath(value: string | null, fallback: string) {
-  if (!value || !value.startsWith("/") || value.startsWith("//")) {
-    return fallback;
-  }
-
-  if (value === "/login" || value === "/register") {
-    return fallback;
-  }
-
-  return value;
-}
 
 export function AuthSessionSync() {
   const pathname = usePathname();

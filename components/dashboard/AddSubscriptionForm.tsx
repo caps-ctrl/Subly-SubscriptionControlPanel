@@ -66,7 +66,7 @@ export function AddSubscriptionForm({
   }
 
   return (
-    <Card className="rounded-3xl bg-white/80 max-w-20 backdrop-blur dark:bg-zinc-950/70">
+    <Card className="rounded-3xl bg-white/80  max-w-20 backdrop-blur dark:bg-zinc-950/70">
       <div className="mb-4 text-sm font-semibold">Dodaj ręcznie</div>
       <form onSubmit={onSubmit} className="grid gap-3 sm:grid-cols-2">
         <div className="sm:col-span-2">

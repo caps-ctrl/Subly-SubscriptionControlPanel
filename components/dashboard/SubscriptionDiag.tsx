@@ -292,8 +292,6 @@ export function SubscriptionDiag({
       const m = addMonthsUtc(monthStartUtc, -i);
       const events = getChargeEventsForMonth(subscriptions, m);
       const now = Date.now();
-      console.log("Miesiac" + monthLabel(m));
-      console.log(events);
 
       const total = events
         .filter(
