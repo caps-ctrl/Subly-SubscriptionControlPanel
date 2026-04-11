@@ -56,7 +56,7 @@ Projekt w Google Cloud Platform **nie został jeszcze zweryfikowany**.
 
 Aplikacja jest przygotowana do działania na **Vercel** — bez potrzeby lokalnej konfiguracji.
 
----
+## <---------------------------------- https://subly-subscription-control-panel-ej.vercel.app --------------------------------->
 
 ## 🧱 Tech stack
 
