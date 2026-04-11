@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { getServerUser } from "@/lib/auth/getServerUser";
 import { prisma } from "@/lib/db/prisma";
-import ThemeToggle from "@/components/ThemeToggle";
+
 import LogoutButton from "@/components/LogoutButton";
 import { ChangePasswordButton } from "@/components/settings/ChangePasswordButton";
 
@@ -128,7 +128,6 @@ export default async function DashboardSettingsPage() {
             wydatkach.
           </div>
         </Card>
-        <ThemeToggle />
       </section>
     </div>
   );

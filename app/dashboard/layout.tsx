@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 
 import DashboardNav from "@/components/dashboard/DashboardNav";
 
@@ -29,7 +30,7 @@ export default async function DashboardLayout({
                 {" "}
                 <div className="flex items-center justify-center     p-5 ">
                   {" "}
-                  <img src="/logo.png" alt="Logo" className="h-10 w-10" />
+                  <Image src="/logo.png" alt="Logo" width={40} height={40} />
                   <h1 className="text-2xl mr-10 font-bold">ubly</h1>
                 </div>{" "}
               </Link>

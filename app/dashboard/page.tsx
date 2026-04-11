@@ -1,6 +1,7 @@
 import { getServerUser } from "@/lib/auth/getServerUser";
 import { prisma } from "@/lib/db/prisma";
 import { monthlyCostCents } from "@/lib/subscriptions/cost";
+import Image from "next/image";
 
 import { SubscriptionDiag } from "@/components/dashboard/SubscriptionDiag";
 import SubsList from "@/components/dashboard/SubsList";
@@ -21,7 +22,7 @@ export default async function DashboardPage() {
     );
   }
 
-  const [gmailAccount, activeSubs] = await Promise.all([
+  const [, activeSubs] = await Promise.all([
     prisma.gmailAccount.findFirst({
       where: { userId: user.id },
       orderBy: { updatedAt: "desc" },
@@ -55,17 +56,6 @@ export default async function DashboardPage() {
       (totalsByCurrency.get(s.currency) ?? 0) + monthly,
     );
   }
-  const monthlyTotals = Array.from(totalsByCurrency.entries())
-    .map(([currency, cents]) => ({ currency, cents }))
-    .sort((a, b) => a.currency.localeCompare(b.currency));
-
-  const nextPayment = activeSubs
-    .filter((s) => Boolean(s.nextBillingDate))
-    .sort(
-      (a, b) =>
-        (a.nextBillingDate?.getTime() ?? Number.POSITIVE_INFINITY) -
-        (b.nextBillingDate?.getTime() ?? Number.POSITIVE_INFINITY),
-    )[0];
 
   const formattedSubs = activeSubs.map((s) => ({
     ...s,
@@ -87,8 +77,6 @@ export default async function DashboardPage() {
           <div className="flex justify-between">
             <div className="flex text-center px-4 border-b w-full pb-5 gap-10">
               <h2>Subskrypcje</h2>
-              <h2>Analiza</h2>
-              <h2>Zarządzaj</h2>
             </div>
           </div>
         </div>
@@ -108,10 +96,12 @@ export default async function DashboardPage() {
           </div>
 
           <div className="relative  rounded-full ">
-            <img
+            <Image
               src="/logo.png"
               alt="Logo"
               className="z-10 absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2"
+              width={80}
+              height={80}
             />
             <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-indigo-500 dark:bg-indigo-700 rounded-full blur-[120px] w-full h-full opacity-90 dark:opacity-50 " />
           </div>

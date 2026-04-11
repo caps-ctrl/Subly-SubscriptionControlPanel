@@ -17,8 +17,8 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
           : variant === "ghost"
             ? "bg-transparent text-zinc-900 hover:bg-zinc-100 dark:text-zinc-50 dark:hover:bg-zinc-900"
             : variant === "cta"
-              ? "hover:bg-indigo-700 active:bg-indigo-800 bg-transparent text-black hover:text-white border border-indigo-700 text-sm font-semibold rounded-xl px-4 py-2 transition-colors"
-              : "bg-indigo-700 active:bg-indigo-800 bg-transparent text-black hover:text-white border border-indigo-700 text-sm font-semibold rounded-xl px-4 py-2 transition-colors";
+              ? "hover:bg-indigo-700 cursor-pointer active:bg-indigo-800 bg-transparent dark:bg-indigo-700 dark:text-white dark:hover:bg-indigo-800 text-black hover:text-white border border-indigo-700 text-sm font-semibold rounded-xl px-4 py-2 transition-colors"
+              : "bg-indigo-700 active:bg-indigo-800 bg-transparent dark:text-white dark:hover:bg-indigo-700 cursor-pointer text-black hover:text-white border border-indigo-700 text-sm font-semibold rounded-xl px-4 py-2 transition-colors";
 
     return (
       <button

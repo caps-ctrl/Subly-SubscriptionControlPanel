@@ -80,6 +80,26 @@ export default function DashboardNav() {
         </svg>
       ),
     },
+    {
+      href: "/dashboard/aihelp",
+      label: "Pomoc AI(wkrótce)",
+      icon: (
+        <svg
+          viewBox="0 0 24 24"
+          className="h-4 w-4"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <rect x="4" y="7" width="16" height="10" rx="2" />
+          <circle cx="9" cy="12" r="1" />
+          <circle cx="15" cy="12" r="1" />
+          <path d="M12 3v4" />
+        </svg>
+      ),
+    },
   ];
 
   return (
