@@ -1,12 +1,12 @@
 import Link from "next/link";
-
+import Image from "next/image";
 import { Button } from "@/components/ui/Button";
 
 export function SiteHeader({ user }: { user: { email: string } | null }) {
   return (
     <header className="flex items-center  justify-between mx-auto max-w-6xl px-2 py-10">
       <div className="flex flex-col items-center font-bold">
-        <img src="/logo.png" alt="Logo" className="h-10 w-10" />
+        <Image src="/logo.png" alt="Logo" width={40} height={40} />
         <h4 className="text-2xl">Subly</h4>
       </div>
       <div className="flex   gap-3">

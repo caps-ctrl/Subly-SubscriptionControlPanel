@@ -1,7 +1,7 @@
 import { forwardRef, type ButtonHTMLAttributes } from "react";
 
 type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
-  variant?: "primary" | "secondary" | "ghost" | "cta" | "cta1";
+  variant?: "primary" | "secondary" | "ghost" | "cta" | "cta1" | "outline";
 };
 
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
@@ -18,7 +18,9 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
             ? "bg-transparent text-zinc-900 hover:bg-zinc-100 dark:text-zinc-50 dark:hover:bg-zinc-900"
             : variant === "cta"
               ? "hover:bg-indigo-700 cursor-pointer active:bg-indigo-800 bg-transparent dark:bg-indigo-700 dark:text-white dark:hover:bg-indigo-800 text-black hover:text-white border border-indigo-700 text-sm font-semibold rounded-xl px-4 py-2 transition-colors"
-              : "bg-indigo-700 active:bg-indigo-800 bg-transparent dark:text-white dark:hover:bg-indigo-700 cursor-pointer text-black hover:text-white border border-indigo-700 text-sm font-semibold rounded-xl px-4 py-2 transition-colors";
+              : variant === "outline"
+                ? "border-border bg-background hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground dark:border-input dark:bg-input/30 dark:hover:bg-input/50"
+                : "bg-indigo-700 active:bg-indigo-800 bg-transparent dark:text-white dark:hover:bg-indigo-700 cursor-pointer text-black hover:text-white border border-indigo-700 text-sm font-semibold rounded-xl px-4 py-2 transition-colors";
 
     return (
       <button

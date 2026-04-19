@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useMemo, useState, type FormEvent } from "react";
-
+import Image from "next/image";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
@@ -52,8 +52,13 @@ export function RegisterForm() {
 
   return (
     <Card className="w-full p-6 border border-black dark:border-white max-w-md">
-      <div className="mb-6">
-        <h1 className="text-2xl font-semibold tracking-tight">Utwórz konto</h1>
+      <div className="mb-6 ">
+        <div className="flex gap-2 items-center">
+          <Image src="/logo.png" alt="Logo" width={48} height={48} />
+          <h1 className="text-2xl font-semibold tracking-tight">
+            Utwórz konto
+          </h1>{" "}
+        </div>
         <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
           Wersja Free pozwala śledzić do 3 subskrypcji.
         </p>

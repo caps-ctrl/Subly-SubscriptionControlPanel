@@ -6,6 +6,43 @@ import Stripe from "stripe";
 
 export const runtime = "nodejs";
 
+function getCurrentPeriodEnd(subscription: Stripe.Subscription) {
+  const timestamp = subscription.items.data[0]?.current_period_end;
+  return timestamp ? new Date(timestamp * 1000) : null;
+}
+
+function shouldUserHaveProPlan(status: Stripe.Subscription.Status) {
+  return status === "active" || status === "trialing" || status === "past_due";
+}
+
+async function syncUserSubscriptionState(subscription: Stripe.Subscription) {
+  const existing = await prisma.userSubscription.findUnique({
+    where: { stripeSubscriptionId: subscription.id },
+    select: { userId: true },
+  });
+
+  if (!existing) {
+    return;
+  }
+
+  await prisma.$transaction(async (tx) => {
+    await tx.userSubscription.update({
+      where: { stripeSubscriptionId: subscription.id },
+      data: {
+        status: subscription.status,
+        currentPeriodEnd: getCurrentPeriodEnd(subscription),
+      },
+    });
+
+    await tx.user.update({
+      where: { id: existing.userId },
+      data: {
+        plan: shouldUserHaveProPlan(subscription.status) ? "PRO" : "FREE",
+      },
+    });
+  });
+}
+
 export async function POST(req: Request) {
   const body = await req.text();
   const sig = (await headers()).get("stripe-signature");
@@ -48,9 +85,7 @@ export async function POST(req: Request) {
     console.log("Pobieranie subskrypcji z Stripe:", stripeSubscriptionId); // IGNORE
     const subscription =
       await stripe.subscriptions.retrieve(stripeSubscriptionId);
-    const currentPeriodEnd = subscription.items.data[0]?.current_period_end
-      ? new Date(subscription.items.data[0].current_period_end * 1000)
-      : null;
+    const currentPeriodEnd = getCurrentPeriodEnd(subscription);
 
     await prisma.$transaction(async (tx) => {
       await tx.userSubscription.upsert({
@@ -72,9 +107,19 @@ export async function POST(req: Request) {
       console.log("Aktualizacja planu użytkownika na PRO:", userId); // IGNORE
       await tx.user.update({
         where: { id: userId },
-        data: { plan: "PRO" },
+        data: {
+          plan: shouldUserHaveProPlan(subscription.status) ? "PRO" : "FREE",
+        },
       });
     });
+  }
+
+  if (
+    event.type === "customer.subscription.updated" ||
+    event.type === "customer.subscription.deleted"
+  ) {
+    const subscription = event.data.object as Stripe.Subscription;
+    await syncUserSubscriptionState(subscription);
   }
 
   return NextResponse.json({ received: true });

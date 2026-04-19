@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { cookies } from "next/headers";
 import "./globals.css";
-import Footer from "@/components/Footer";
+import LoadingScreen from "@/components/LoadingScreen";
 import { AuthSessionSync } from "@/components/auth/AuthSessionSync";
-
+import { Suspense } from "react";
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
@@ -63,8 +63,10 @@ export default async function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} ${htmlClass} overflow-x-hidden antialiased dark:bg-black`}
       >
-        <AuthSessionSync />
-        {children}
+        <Suspense fallback={<LoadingScreen />}>
+          <AuthSessionSync />
+          {children}
+        </Suspense>
       </body>
     </html>
   );

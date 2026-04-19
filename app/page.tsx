@@ -93,7 +93,6 @@ export default async function HomePage() {
       <section>
         <Pricing user={user ? { plan: user.plan } : null} />
       </section>
-      <Footer />
     </>
   );
 }

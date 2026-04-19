@@ -6,6 +6,7 @@ import { useState, type FormEvent } from "react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Modal } from "@/components/ui/Modal";
+import { cn } from "@/lib/utils";
 
 const ERROR_MESSAGES: Record<string, string> = {
   CHANGE_PASSWORD_FAILED: "Nie udało się zmienić hasła. Spróbuj ponownie.",
@@ -23,7 +24,11 @@ function getErrorMessage(error?: string) {
   return ERROR_MESSAGES[error] ?? ERROR_MESSAGES.CHANGE_PASSWORD_FAILED;
 }
 
-export function ChangePasswordButton() {
+export function ChangePasswordButton({
+  className = "",
+}: {
+  className?: string;
+}) {
   const [open, setOpen] = useState(false);
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -103,7 +108,7 @@ export function ChangePasswordButton() {
         <Button
           type="button"
           variant="secondary"
-          className="justify-start gap-2"
+          className={cn("justify-start gap-2", className)}
           onClick={openModal}
         >
           <Shield className="w-4 h-4" />
