@@ -84,7 +84,7 @@ export async function POST(request: NextRequest) {
       data: { passwordHash },
     }),
     prisma.refreshToken.updateMany({
-      where: { userId: user.id, revokedAt: null },
+      where: { userId: user.id, type: "AUTH", revokedAt: null },
       data: {
         revokedAt,
         tokenUsed: true,

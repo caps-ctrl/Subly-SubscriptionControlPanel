@@ -309,12 +309,12 @@ export default async function DashboardSettingsPage() {
         <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
           {/* Konto i Bezpieczenstwo*/}
           <div className={surfaceClassName()}>
-            <div className="absolute top-1/2 left-1/2 w-[500px] h-[500px] bg-indigo-500 rounded-full blur-[150px] opacity-30 dark:opacity-20" />
+            <div className="z-0  absolute top-1/2 left-1/2 w-[500px] h-[500px] bg-indigo-500 rounded-full blur-[150px] opacity-30 dark:opacity-20" />
             {/* Glow 2 */}
-            <div className="absolute top-0 left-1/2 w-[400px] h-[400px] bg-cyan-400 rounded-full blur-[120px] opacity-10 dark:opacity-20" />
+            <div className="z-0  absolute top-0 left-1/2 w-[400px] h-[400px] bg-cyan-400 rounded-full blur-[120px] opacity-10 dark:opacity-20" />
             {/* Glow 3 */}
-            <div className="absolute top-0 left-0 w-[300px] h-[300px] bg-violet-600 rounded-full blur-[100px] opacity-30 dark:opacity-20" />
-            <div className="flex items-start justify-between gap-4">
+            <div className="z-0  absolute top-0 left-0 w-[300px] h-[300px] bg-violet-600 rounded-full blur-[100px] opacity-30 dark:opacity-20" />
+            <div className="flex  items-start justify-between gap-4">
               <div>
                 <div className="inline-flex items-center gap-2 rounded-full bg-zinc-100 px-3 py-1 text-xs font-semibold uppercase tracking-[0.22em] text-zinc-600 dark:bg-zinc-900 dark:text-zinc-300">
                   <Shield className="h-3.5 w-3.5" />
@@ -371,7 +371,7 @@ export default async function DashboardSettingsPage() {
             </div>
             <div className="mt-6 grid gap-3 sm:grid-cols-2">
               <ChangePasswordButton className="w-full justify-center sm:justify-start" />
-              <LogoutButton className="w-full rounded-2xl px-4 py-3" />
+              <LogoutButton className="w-full z-10  rounded-2xl px-4 py-3 bg-red-500" />
             </div>
           </div>
           {/*Plan i Subksrypcja */}
@@ -396,12 +396,12 @@ export default async function DashboardSettingsPage() {
               </span>
             </div>
 
-            <div className="mt-5 relative rounded-[24px] border border-zinc-200/70 bg-white/85 p-5 dark:border-zinc-800 dark:bg-zinc-950/80">
-              <div className="absolute top-1/2 right-1/2  w-[500px] h-[500px] bg-indigo-700 rounded-full blur-[150px] opacity-30 dark:opacity-20" />
+            <div className="mt-5  relative rounded-[24px] border border-zinc-200/70 bg-white/85 p-5 dark:border-zinc-800 dark:bg-zinc-950/80">
+              <div className="  absolute top-1/2 right-1/2  w-[500px] h-[500px] bg-indigo-700 rounded-full blur-[120px] opacity-30 dark:opacity-20 z-0" />
               {/* Glow 2 */}{" "}
-              <div className="absolute top-0 right-1/2  w-[400px] h-[400px] bg-cyan-400 rounded-full blur-[120px] opacity-10 dark:opacity-20 " />
+              <div className=" absolute top-0 right-1/2  w-[400px] h-[400px] bg-cyan-400 rounded-full blur-[120px] opacity-10 dark:opacity-20  z-0" />
               {/* Glow 3 */}
-              <div className="absolute top-2/3 right-0  w-[300px] h-[300px] bg-violet-400 rounded-full blur-[100px] opacity-30 dark:opacity-20" />
+              <div className="  absolute top-2/3 right-0  w-[300px] h-[300px] bg-violet-400 rounded-full blur-[100px] opacity-30 dark:opacity-20 z-0 " />
               <div className="flex items-end justify-between gap-4">
                 <div>
                   <div className="text-sm text-zinc-500 dark:text-zinc-400">
@@ -447,7 +447,7 @@ export default async function DashboardSettingsPage() {
               {billingState.description}
             </p>
 
-            <div className="mt-6">
+            <div className="relative z-10">
               <ManageSubscriptionButton
                 hasBillingAccount={hasBillingAccount}
                 plan={user.plan}

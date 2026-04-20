@@ -39,10 +39,16 @@ enum NotificationChannel {
   EMAIL
 }
 
+enum RefreshTokenType {
+  AUTH
+  GMAIL
+}
+
 model User {
   id           String   @id @default(uuid())
   email        String   @unique
   passwordHash String
+  isVerified   Boolean  @default(true)
   plan         Plan     @default(FREE)
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
@@ -60,6 +66,9 @@ model RefreshToken {
   id                String   @id @default(uuid())
   userId            String
   tokenHash         String   @unique
+  type              RefreshTokenType @default(AUTH)
+  providerEmail     String?
+  encryptedToken    String?
   tokenUsed         Boolean  @default(false)
   expiresAt         DateTime
   revokedAt         DateTime?
@@ -72,6 +81,8 @@ model RefreshToken {
   previousTokens  RefreshToken[] @relation("RefreshTokenRotation")
 
   @@index([userId])
+  @@index([userId, type])
+  @@index([type, providerEmail])
   @@index([userId, revokedAt])
   @@index([expiresAt])
 }

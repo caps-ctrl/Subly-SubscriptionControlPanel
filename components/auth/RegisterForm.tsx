@@ -9,6 +9,14 @@ import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
 import { normalizeRedirectPath } from "@/lib/auth/normalizeRedirectPath";
 
+const ERROR_MESSAGES: Record<string, string> = {
+  EMAIL_TAKEN: "Konto z tym adresem email już istnieje.",
+  INVALID_INPUT: "Uzupełnij poprawnie formularz rejestracji.",
+  REGISTER_FAILED: "Nie udało się utworzyć konta. Spróbuj ponownie.",
+  VERIFICATION_EMAIL_FAILED:
+    "Konto nie zostało utworzone, bo nie udało się wysłać maila weryfikacyjnego.",
+};
+
 export function RegisterForm() {
   const router = useRouter();
   const params = useSearchParams();
@@ -26,6 +34,11 @@ export function RegisterForm() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  function getErrorMessage(code?: string) {
+    if (!code) return ERROR_MESSAGES.REGISTER_FAILED;
+    return ERROR_MESSAGES[code] ?? ERROR_MESSAGES.REGISTER_FAILED;
+  }
+
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
     setError(null);
@@ -38,12 +51,20 @@ export function RegisterForm() {
       });
       const data = (await res.json().catch(() => null)) as {
         error?: string;
+        email?: string;
       } | null;
       if (!res.ok) {
-        setError(data?.error ?? "REGISTER_FAILED");
+        setError(getErrorMessage(data?.error));
         return;
       }
-      router.push(next);
+
+      const targetEmail = data?.email ?? email;
+      const loginUrl =
+        next === "/dashboard"
+          ? `/login?verify_sent=1&email=${encodeURIComponent(targetEmail)}`
+          : `/login?next=${encodeURIComponent(next)}&verify_sent=1&email=${encodeURIComponent(targetEmail)}`;
+
+      router.push(loginUrl);
       router.refresh();
     } finally {
       setLoading(false);
@@ -60,7 +81,7 @@ export function RegisterForm() {
           </h1>{" "}
         </div>
         <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
-          Wersja Free pozwala śledzić do 3 subskrypcji.
+          Po rejestracji wyślemy Ci mail z linkiem aktywacyjnym.
         </p>
       </div>
 

@@ -3,9 +3,7 @@ import { z } from "zod";
 
 import { prisma } from "@/lib/db/prisma";
 import { hashPassword } from "@/lib/auth/password";
-import { signAccessToken } from "@/lib/auth/jwt";
-import { issueRefreshToken } from "@/lib/auth/refreshToken";
-import { setAuthCookies } from "@/lib/auth/session";
+import { sendAccountVerificationEmail } from "@/lib/auth/emailVerification";
 
 export const runtime = "nodejs";
 
@@ -26,26 +24,71 @@ export async function POST(request: NextRequest) {
 
   const { email, password } = parsed.data;
 
-  const existing = await prisma.user.findUnique({ where: { email } });
+  const existing = await prisma.user.findUnique({
+    where: { email },
+    select: {
+      id: true,
+      email: true,
+      isVerified: true,
+    },
+  });
   if (existing) {
+    if (!existing.isVerified) {
+      try {
+        await sendAccountVerificationEmail(existing);
+      } catch (error) {
+        console.error("Verification email resend failed", error);
+
+        return NextResponse.json(
+          { error: "VERIFICATION_EMAIL_FAILED" },
+          { status: 500 },
+        );
+      }
+
+      return NextResponse.json(
+        {
+          ok: true,
+          verificationRequired: true,
+          email: existing.email,
+        },
+        { status: 200 },
+      );
+    }
+
     return NextResponse.json({ error: "EMAIL_TAKEN" }, { status: 409 });
   }
 
   const passwordHash = await hashPassword(password);
   const user = await prisma.user.create({
-    data: { email, passwordHash },
-    select: { id: true, email: true, plan: true },
+    data: {
+      email,
+      passwordHash,
+      isVerified: false,
+    },
+    select: {
+      id: true,
+      email: true,
+    },
   });
 
-  const [accessToken, refreshToken] = await Promise.all([
-    signAccessToken({ id: user.id }),
-    issueRefreshToken(user.id),
-  ]);
+  try {
+    await sendAccountVerificationEmail(user);
+  } catch (error) {
+    console.error("Verification email send failed", error);
+    await prisma.user.delete({ where: { id: user.id } }).catch(() => null);
 
-  const res = NextResponse.json({ user }, { status: 201 });
-  setAuthCookies(res, {
-    accessToken,
-    refreshToken: refreshToken.token,
-  });
-  return res;
+    return NextResponse.json(
+      { error: "VERIFICATION_EMAIL_FAILED" },
+      { status: 500 },
+    );
+  }
+
+  return NextResponse.json(
+    {
+      ok: true,
+      verificationRequired: true,
+      email: user.email,
+    },
+    { status: 201 },
+  );
 }

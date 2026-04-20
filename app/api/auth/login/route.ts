@@ -31,11 +31,21 @@ export async function POST(request: NextRequest) {
 
   const user = await prisma.user.findUnique({
     where: { email },
-    select: { id: true, email: true, plan: true, passwordHash: true },
+    select: {
+      id: true,
+      email: true,
+      plan: true,
+      isVerified: true,
+      passwordHash: true,
+    },
   });
 
   if (!user) {
     return NextResponse.json({ error: "INVALID_CREDENTIALS" }, { status: 401 });
+  }
+
+  if (!user.isVerified) {
+    return NextResponse.json({ error: "EMAIL_NOT_VERIFIED" }, { status: 403 });
   }
 
   const ok = await verifyPassword(password, user.passwordHash);

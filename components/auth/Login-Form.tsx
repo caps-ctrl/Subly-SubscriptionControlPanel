@@ -3,7 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useMemo, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
 
 import { Button } from "@/components/ui/Button";
 import {
@@ -26,9 +26,13 @@ import { normalizeRedirectPath } from "@/lib/auth/normalizeRedirectPath";
 import { cn } from "@/lib/utils";
 
 const ERROR_MESSAGES: Record<string, string> = {
+  EMAIL_NOT_VERIFIED:
+    "Potwierdź adres email przed zalogowaniem. Możesz wysłać link ponownie poniżej.",
   INVALID_CREDENTIALS: "Nieprawidłowy email lub hasło.",
   INVALID_INPUT: "Uzupełnij poprawnie formularz logowania.",
   LOGIN_FAILED: "Nie udało się zalogować. Spróbuj ponownie.",
+  VERIFICATION_EMAIL_FAILED:
+    "Nie udało się wysłać nowego linku weryfikacyjnego. Spróbuj ponownie.",
 };
 
 export function LoginForm({
@@ -45,11 +49,45 @@ export function LoginForm({
     next === "/dashboard"
       ? "/register"
       : `/register?next=${encodeURIComponent(next)}`;
+  const emailFromParams = params.get("email") ?? "";
+  const queryInfo = useMemo(() => {
+    if (params.get("verified") === "1") {
+      return "Email został potwierdzony. Możesz się teraz zalogować.";
+    }
 
-  const [email, setEmail] = useState("");
+    if (params.get("verify_sent") === "1") {
+      return "Wysłaliśmy link weryfikacyjny na Twój adres email.";
+    }
+
+    if (params.get("verification") === "invalid") {
+      return "Link weryfikacyjny jest nieprawidłowy albo wygasł. Wyślij nowy link poniżej.";
+    }
+
+    if (params.get("google") === "missing_refresh_token") {
+      return "Google zalogował konto, ale nie zwrócił nowego refresh tokena do Gmaila. Po zalogowaniu połącz Gmail ponownie.";
+    }
+
+    if (params.get("google") === "error") {
+      return "Logowanie przez Google nie powiodło się. Spróbuj ponownie.";
+    }
+
+    return null;
+  }, [params]);
+
+  const [email, setEmail] = useState(emailFromParams);
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [resendLoading, setResendLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [info, setInfo] = useState<string | null>(queryInfo);
+
+  useEffect(() => {
+    setEmail(emailFromParams);
+  }, [emailFromParams]);
+
+  useEffect(() => {
+    setInfo(queryInfo);
+  }, [queryInfo]);
 
   function getErrorMessage(code?: string) {
     if (!code) return ERROR_MESSAGES.LOGIN_FAILED;
@@ -59,6 +97,7 @@ export function LoginForm({
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError(null);
+    setInfo(null);
     setLoading(true);
 
     try {
@@ -83,6 +122,46 @@ export function LoginForm({
     }
   }
 
+  async function onResendVerification() {
+    setError(null);
+    setInfo(null);
+
+    if (!email.trim()) {
+      setError("Wpisz email, na który mamy wysłać link weryfikacyjny.");
+      return;
+    }
+
+    setResendLoading(true);
+
+    try {
+      const response = await fetch("/api/auth/resend-verification", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+      const data = (await response.json().catch(() => null)) as {
+        error?: string;
+      } | null;
+
+      if (!response.ok) {
+        setError(getErrorMessage(data?.error));
+        return;
+      }
+
+      setInfo(
+        "Jeśli konto istnieje i nie jest jeszcze potwierdzone, wysłaliśmy nowy link weryfikacyjny.",
+      );
+    } finally {
+      setResendLoading(false);
+    }
+  }
+
+  function onGoogleLogin() {
+    window.location.assign(
+      `/api/auth/google/connect?next=${encodeURIComponent(next)}`,
+    );
+  }
+
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       <Card>
@@ -100,6 +179,12 @@ export function LoginForm({
           <CardDescription>Zaloguj się, aby przejść do dashboardu.</CardDescription>
         </CardHeader>
         <CardContent>
+          {info ? (
+            <p className="mb-4 rounded-xl bg-emerald-50 px-3 py-2 text-sm text-emerald-700 dark:bg-emerald-950 dark:text-emerald-200">
+              {info}
+            </p>
+          ) : null}
+
           <form onSubmit={onSubmit}>
             <FieldGroup>
               <Field>
@@ -118,7 +203,7 @@ export function LoginForm({
                   </svg>
                   Login with Apple
                 </Button>
-                <Button variant="outline" type="button" disabled>
+                <Button variant="outline" type="button" onClick={onGoogleLogin}>
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     width={25}
@@ -134,7 +219,7 @@ export function LoginForm({
                   Login with Google
                 </Button>
                 <FieldDescription className="text-center">
-                  Logowanie przez Apple i Google nie jest jeszcze dostępne.
+                  Apple jeszcze nie jest dostępne. Google jest już aktywne.
                 </FieldDescription>
               </Field>
               <FieldSeparator className="*:data-[slot=field-separator-content]:bg-card">
@@ -173,6 +258,18 @@ export function LoginForm({
                 <Button type="submit" disabled={loading}>
                   {loading ? "Logowanie..." : "Login"}
                 </Button>
+                {error === ERROR_MESSAGES.EMAIL_NOT_VERIFIED ? (
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    disabled={resendLoading}
+                    onClick={onResendVerification}
+                  >
+                    {resendLoading
+                      ? "Wysyłanie linku..."
+                      : "Wyślij link weryfikacyjny ponownie"}
+                  </Button>
+                ) : null}
                 <FieldDescription className="text-center">
                   Don&apos;t have an account?{" "}
                   <Link href={registerHref}>Sign up</Link>

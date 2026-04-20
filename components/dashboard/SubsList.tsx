@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import SubCard from "@/components/dashboard/SubCard";
 import { Input } from "@/components/ui/Input";
 import { ApiSubscription } from "./types";
-
+import Image from "next/image";
 export default function SubsList({
   formattedSubs,
 }: {
@@ -173,57 +173,95 @@ export default function SubsList({
 
       {/* 🔥 EDIT MODAL */}
       {editing && (
-        <div className="fixed inset-0  z-20 bg-black/40 flex items-center justify-center">
-          <div className="bg-white dark:bg-zinc-800 p-6 rounded-2xl w-[400px] space-y-4">
-            <h2 className="text-lg font-bold">Edit subscription</h2>
+        <div
+          onClick={(e) => {
+            if (e.currentTarget === e.target) {
+              setEditing(null);
+            }
+          }}
+          className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center px-4"
+        >
+          <div className="w-full max-w-md bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl shadow-2xl p-6 space-y-6 animate-in fade-in zoom-in-95">
+            {/* HEADER */}
+            <div className="flex flex-col items-center gap-2">
+              <h2 className="text-xl font-semibold text-zinc-800 dark:text-zinc-100">
+                Edytuj subskrypcję
+              </h2>
+              <p className="text-sm text-zinc-500 dark:text-zinc-400">
+                Zaktualizuj dane subskrypcji
+              </p>
+            </div>
 
-            <input
-              value={editing.providerName}
-              onChange={(e) =>
-                setEditing({ ...editing, providerName: e.target.value })
-              }
-              className="w-full border p-2 rounded"
-            />
+            {/* INPUTY */}
+            <div className="space-y-4">
+              <div>
+                <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                  Nazwa
+                </label>
+                <input
+                  value={editing.providerName}
+                  onChange={(e) =>
+                    setEditing({ ...editing, providerName: e.target.value })
+                  }
+                  className="w-full mt-1 border border-zinc-300 dark:border-zinc-700 bg-transparent px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                />
+              </div>
 
-            <input
-              type="number"
-              value={editing.amountCents / 100}
-              onChange={(e) =>
-                setEditing({
-                  ...editing,
-                  amountCents: Number(e.target.value) * 100,
-                })
-              }
-              className="w-full border p-2 rounded"
-            />
+              <div>
+                <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                  Cena (PLN)
+                </label>
+                <input
+                  type="number"
+                  value={editing.amountCents / 100}
+                  onChange={(e) =>
+                    setEditing({
+                      ...editing,
+                      amountCents: Number(e.target.value) * 100,
+                    })
+                  }
+                  className="w-full mt-1 border border-zinc-300 dark:border-zinc-700 bg-transparent px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                />
+              </div>
 
-            <input
-              type="date"
-              value={
-                editing.nextBillingDate
-                  ? editing.nextBillingDate.slice(0, 10)
-                  : ""
-              }
-              onChange={(e) =>
-                setEditing({
-                  ...editing,
-                  nextBillingDate: e.target.value
-                    ? `${e.target.value}T00:00:00.000Z`
-                    : null,
-                })
-              }
-              className="w-full border p-2 rounded"
-              aria-label="Następna płatność"
-            />
+              <div>
+                <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                  Następna płatność
+                </label>
+                <input
+                  type="date"
+                  value={
+                    editing.nextBillingDate
+                      ? editing.nextBillingDate.slice(0, 10)
+                      : ""
+                  }
+                  onChange={(e) =>
+                    setEditing({
+                      ...editing,
+                      nextBillingDate: e.target.value
+                        ? `${e.target.value}T00:00:00.000Z`
+                        : null,
+                    })
+                  }
+                  className="w-full mt-1 border border-zinc-300 dark:border-zinc-700 bg-transparent px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                />
+              </div>
+            </div>
 
-            <div className="flex justify-end gap-2">
-              <button onClick={() => setEditing(null)}>Cancel</button>
+            {/* BUTTONY */}
+            <div className="flex justify-end gap-3 pt-2">
+              <button
+                onClick={() => setEditing(null)}
+                className="px-4 py-2 rounded-lg text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition"
+              >
+                Anuluj
+              </button>
 
               <button
                 onClick={handleSave}
-                className="bg-black text-white px-4 py-2 rounded"
+                className="px-5 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-medium shadow-md transition"
               >
-                Save
+                Zapisz
               </button>
             </div>
           </div>
@@ -237,45 +275,85 @@ export default function SubsList({
               setCreating(false);
             }
           }}
-          className="fixed inset-0 z-20 bg-black/40 flex items-center justify-center"
+          className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center px-4"
         >
-          <div className="bg-white dark:bg-black z-21 flex flex-col  space-y-4 min-w-[30vw] p-6 rounded-2xl ">
-            <h3 className="font-semibold">Dodaj subskrypcję</h3>
+          <div className="w-full max-w-md bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl shadow-2xl p-6 space-y-6 animate-in fade-in zoom-in-95">
+            {/* HEADER */}
+            <div className="flex flex-col items-center gap-2">
+              <Image src="/logo.png" alt="Logo" width={48} height={48} />
+              <h3 className="text-xl font-semibold text-zinc-800 dark:text-zinc-100">
+                Dodaj subskrypcję
+              </h3>
+              <p className="text-sm text-zinc-500 dark:text-zinc-400">
+                Wprowadź dane swojej subskrypcji
+              </p>
+            </div>
 
-            <input
-              placeholder="Nazwa (np. Netflix)"
-              value={newSub.providerName}
-              onChange={(e) =>
-                setNewSub({ ...newSub, providerName: e.target.value })
-              }
-              className="w-full border  p-2 rounded"
-            />
+            {/* INPUTY */}
+            <div className="space-y-4">
+              <div>
+                <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                  Nazwa
+                </label>
+                <input
+                  placeholder="Netflix"
+                  value={newSub.providerName}
+                  onChange={(e) =>
+                    setNewSub({ ...newSub, providerName: e.target.value })
+                  }
+                  className="w-full mt-1 border border-zinc-300 dark:border-zinc-700 bg-transparent px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                />
+              </div>
 
-            <input
-              type="number"
-              placeholder="Kwota (PLN)"
-              value={newSub.amountCents}
-              onChange={(e) =>
-                setNewSub({ ...newSub, amountCents: Number(e.target.value) })
-              }
-              className="w-full border p-2 rounded"
-            />
+              <div>
+                <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                  Cena (PLN)
+                </label>
+                <input
+                  type="number"
+                  placeholder="29.99"
+                  value={newSub.amountCents}
+                  onChange={(e) =>
+                    setNewSub({
+                      ...newSub,
+                      amountCents: Number(e.target.value),
+                    })
+                  }
+                  className="w-full mt-1 border border-zinc-300 dark:border-zinc-700 bg-transparent px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                />
+              </div>
 
-            <input
-              type="date"
-              value={newSub.nextBillingDate}
-              onChange={(e) =>
-                setNewSub({ ...newSub, nextBillingDate: e.target.value })
-              }
-              className="w-full border p-2 rounded"
-            />
+              <div>
+                <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                  Następna płatność
+                </label>
+                <input
+                  type="date"
+                  value={newSub.nextBillingDate}
+                  onChange={(e) =>
+                    setNewSub({ ...newSub, nextBillingDate: e.target.value })
+                  }
+                  className="w-full mt-1 border border-zinc-300 dark:border-zinc-700 bg-transparent px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                />
+              </div>
+            </div>
 
-            <button
-              onClick={handleAdd}
-              className="w-full bg-black dark:border rounded-2xl text-white py-2 rounded"
-            >
-              Dodaj
-            </button>
+            {/* BUTTONY */}
+            <div className="flex justify-end gap-3 pt-2">
+              <button
+                onClick={() => setCreating(false)}
+                className="px-4 py-2 rounded-lg text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition"
+              >
+                Anuluj
+              </button>
+
+              <button
+                onClick={handleAdd}
+                className="px-5 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-medium shadow-md transition"
+              >
+                Dodaj
+              </button>
+            </div>
           </div>
         </div>
       )}

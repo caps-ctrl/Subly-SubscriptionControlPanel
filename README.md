@@ -9,6 +9,7 @@ Aplikacja webowa (Node.js + Next.js/React) do zarządzania subskrypcjami i wydat
 ### ✅ Obecnie dostępne
 
 - 🔐 Rejestracja / logowanie (email + hasło, bcrypt)
+- 📬 Weryfikacja konta przez email
 - 🔑 Autoryzacja oparta o:
   - access token (JWT w HttpOnly cookie)
   - refresh token (rotowany + hash w bazie)

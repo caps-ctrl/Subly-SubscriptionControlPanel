@@ -1,9 +1,15 @@
 import crypto from "node:crypto";
-import type { Prisma } from "@prisma/client";
+import type { Prisma, RefreshTokenType } from "@prisma/client";
 
 import { prisma } from "@/lib/db/prisma";
 import { env } from "@/lib/env";
-import { authUserSelect, type AuthUser } from "@/lib/auth/user";
+import { decryptString, encryptString } from "@/lib/crypto/encryption";
+import {
+  authUserWithVerificationSelect,
+  toVerifiedAuthUser,
+  type AuthUser,
+  type AuthUserRecord,
+} from "@/lib/auth/user";
 
 type RefreshSession = {
   tokenId: string;
@@ -21,12 +27,17 @@ type RefreshTokenRecord = {
   id: string;
   userId: string;
   tokenHash: string;
+  type: RefreshTokenType;
+  providerEmail: string | null;
+  encryptedToken: string | null;
   tokenUsed: boolean;
   expiresAt: Date;
   revokedAt: Date | null;
   replacedByTokenId: string | null;
-  user: AuthUser;
+  user: AuthUserRecord;
 };
+
+const GMAIL_REFRESH_TOKEN_EXPIRY = new Date("9999-12-31T23:59:59.999Z");
 
 function hashTokenSecret(secret: string) {
   return crypto.createHash("sha256").update(secret).digest("hex");
@@ -66,12 +77,15 @@ async function getRefreshTokenRecord(
       id: true,
       userId: true,
       tokenHash: true,
+      type: true,
+      providerEmail: true,
+      encryptedToken: true,
       tokenUsed: true,
       expiresAt: true,
       revokedAt: true,
       replacedByTokenId: true,
       user: {
-        select: authUserSelect,
+        select: authUserWithVerificationSelect,
       },
     },
   }) as Promise<RefreshTokenRecord | null>;
@@ -121,6 +135,9 @@ export async function issueRefreshToken(
     data: {
       userId,
       tokenHash: hashTokenSecret(secret),
+      type: "AUTH",
+      providerEmail: null,
+      encryptedToken: null,
       expiresAt,
     },
     select: {
@@ -144,6 +161,7 @@ export async function validateRefreshToken(
   return prisma.$transaction(async (tx) => {
     const refreshToken = await getRefreshTokenRecord(tx, parsed.id);
     if (!refreshToken) return null;
+    if (refreshToken.type !== "AUTH") return null;
     if (refreshToken.tokenHash !== hashTokenSecret(parsed.secret)) return null;
 
     if (refreshToken.tokenUsed) {
@@ -154,9 +172,12 @@ export async function validateRefreshToken(
     if (refreshToken.revokedAt) return null;
     if (refreshToken.expiresAt.getTime() <= Date.now()) return null;
 
+    const verifiedUser = toVerifiedAuthUser(refreshToken.user);
+    if (!verifiedUser) return null;
+
     return {
       tokenId: refreshToken.id,
-      user: refreshToken.user,
+      user: verifiedUser,
       expiresAt: refreshToken.expiresAt,
     };
   });
@@ -172,6 +193,7 @@ export async function rotateRefreshToken(
     const refreshToken = await getRefreshTokenRecord(tx, parsed.id);
 
     if (!refreshToken) return null;
+    if (refreshToken.type !== "AUTH") return null;
     if (refreshToken.tokenHash !== hashTokenSecret(parsed.secret)) return null;
     if (refreshToken.tokenUsed) {
       await revokeRefreshTokenChain(tx, refreshToken.id);
@@ -179,6 +201,9 @@ export async function rotateRefreshToken(
     }
     if (refreshToken.revokedAt) return null;
     if (refreshToken.expiresAt.getTime() <= Date.now()) return null;
+
+    const verifiedUser = toVerifiedAuthUser(refreshToken.user);
+    if (!verifiedUser) return null;
 
     const revokedAt = new Date();
     const claimed = await tx.refreshToken.updateMany({
@@ -206,6 +231,9 @@ export async function rotateRefreshToken(
       data: {
         userId: refreshToken.userId,
         tokenHash: hashTokenSecret(nextSecret),
+        type: "AUTH",
+        providerEmail: null,
+        encryptedToken: null,
         expiresAt: nextExpiresAt,
       },
       select: {
@@ -223,7 +251,7 @@ export async function rotateRefreshToken(
 
     return {
       tokenId: nextRefreshToken.id,
-      user: refreshToken.user,
+      user: verifiedUser,
       expiresAt: nextRefreshToken.expiresAt,
       refreshToken: buildRefreshTokenValue(nextRefreshToken.id, nextSecret),
     };
@@ -238,10 +266,111 @@ export async function revokeRefreshToken(token: string): Promise<void> {
     where: {
       id: parsed.id,
       tokenHash: hashTokenSecret(parsed.secret),
+      type: "AUTH",
       revokedAt: null,
     },
     data: {
       revokedAt: new Date(),
     },
   });
+}
+
+export async function storeOAuthRefreshToken(input: {
+  userId: string;
+  rawToken: string;
+  type: Exclude<RefreshTokenType, "AUTH">;
+  providerEmail: string;
+}) {
+  const tokenHash = hashTokenSecret(input.rawToken);
+  const encryptedToken = encryptString(input.rawToken);
+  const revokedAt = new Date();
+
+  await prisma.$transaction(async (tx) => {
+    const existing = await tx.refreshToken.findFirst({
+      where: {
+        userId: input.userId,
+        type: input.type,
+        providerEmail: input.providerEmail,
+        revokedAt: null,
+      },
+      select: {
+        id: true,
+        tokenHash: true,
+      },
+      orderBy: { updatedAt: "desc" },
+    });
+
+    if (existing?.tokenHash === tokenHash) {
+      await tx.refreshToken.update({
+        where: { id: existing.id },
+        data: {
+          encryptedToken,
+          tokenUsed: false,
+          replacedByTokenId: null,
+          expiresAt: GMAIL_REFRESH_TOKEN_EXPIRY,
+        },
+      });
+      return;
+    }
+
+    await tx.refreshToken.updateMany({
+      where: {
+        userId: input.userId,
+        type: input.type,
+        providerEmail: input.providerEmail,
+        revokedAt: null,
+      },
+      data: {
+        revokedAt,
+      },
+    });
+
+    await tx.refreshToken.upsert({
+      where: { tokenHash },
+      update: {
+        userId: input.userId,
+        type: input.type,
+        providerEmail: input.providerEmail,
+        encryptedToken,
+        tokenUsed: false,
+        revokedAt: null,
+        replacedByTokenId: null,
+        expiresAt: GMAIL_REFRESH_TOKEN_EXPIRY,
+      },
+      create: {
+        userId: input.userId,
+        tokenHash,
+        type: input.type,
+        providerEmail: input.providerEmail,
+        encryptedToken,
+        expiresAt: GMAIL_REFRESH_TOKEN_EXPIRY,
+      },
+    });
+  });
+}
+
+export async function getStoredOAuthRefreshToken(input: {
+  type: Exclude<RefreshTokenType, "AUTH">;
+  providerEmail: string;
+}) {
+  const token = await prisma.refreshToken.findFirst({
+    where: {
+      type: input.type,
+      providerEmail: input.providerEmail,
+      revokedAt: null,
+      encryptedToken: {
+        not: null,
+      },
+    },
+    select: {
+      encryptedToken: true,
+    },
+    orderBy: { updatedAt: "desc" },
+  });
+
+  if (!token?.encryptedToken) {
+    return null;
+  }
+
+  return decryptString(token.encryptedToken);
 }

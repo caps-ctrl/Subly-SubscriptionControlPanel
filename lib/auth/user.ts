@@ -14,9 +14,36 @@ export type AuthUser = {
   plan: "FREE" | "PRO";
 };
 
+export type AuthUserRecord = AuthUser & {
+  isVerified: boolean;
+};
+
+export const authUserWithVerificationSelect = {
+  id: true,
+  email: true,
+  plan: true,
+  isVerified: true,
+} satisfies Prisma.UserSelect;
+
+export function toVerifiedAuthUser(
+  user: AuthUserRecord | null | undefined,
+): AuthUser | null {
+  if (!user || !user.isVerified) {
+    return null;
+  }
+
+  return {
+    id: user.id,
+    email: user.email,
+    plan: user.plan,
+  };
+}
+
 export async function getAuthUserById(id: string): Promise<AuthUser | null> {
-  return prisma.user.findUnique({
+  const user = await prisma.user.findUnique({
     where: { id },
-    select: authUserSelect,
+    select: authUserWithVerificationSelect,
   });
+
+  return toVerifiedAuthUser(user);
 }

@@ -1,7 +1,7 @@
 import { google } from "googleapis";
 
 import { env } from "@/lib/env";
-import { GMAIL_SCOPES } from "@/lib/gmail/scopes";
+import { GOOGLE_APP_SCOPES } from "@/lib/gmail/scopes";
 
 export function getGoogleOAuth2Client() {
   if (!env.GOOGLE_CLIENT_ID || !env.GOOGLE_CLIENT_SECRET) {
@@ -17,13 +17,12 @@ export function getGoogleOAuth2Client() {
   );
 }
 
-export function getGoogleAuthUrl(state: string) {
+export function getGoogleAuthUrl(state: string, scopes = GOOGLE_APP_SCOPES) {
   const oauth2 = getGoogleOAuth2Client();
   return oauth2.generateAuthUrl({
     access_type: "offline",
     prompt: "consent",
-    scope: [...GMAIL_SCOPES],
+    scope: [...scopes],
     state,
   });
 }
-

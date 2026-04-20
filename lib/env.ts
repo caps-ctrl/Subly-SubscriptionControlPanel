@@ -12,6 +12,11 @@ const EnvSchema = z.object({
     .int()
     .positive()
     .default(60 * 60 * 24 * 30),
+  EMAIL_VERIFICATION_TTL_SECONDS: z
+    .coerce.number()
+    .int()
+    .positive()
+    .default(60 * 60 * 24),
   ENCRYPTION_KEY: z.string().min(1),
   APP_BASE_URL: z.string().url().default("http://localhost:3000"),
 
@@ -26,7 +31,6 @@ const EnvSchema = z.object({
   SMTP_HOST: z.string().min(1).optional(),
   SMTP_PORT: z.coerce.number().int().positive().optional(),
   SMTP_USER: z.string().min(1).optional(),
-  SMTP_PASS: z.string().min(1).optional(),
   SMTP_FROM: z.string().min(1).optional(),
 
   RESEND_API_KEY: z.string().min(1).optional(),
@@ -41,6 +45,8 @@ export const env = EnvSchema.parse({
   REFRESH_COOKIE_NAME: process.env.REFRESH_COOKIE_NAME,
   ACCESS_TOKEN_TTL_SECONDS: process.env.ACCESS_TOKEN_TTL_SECONDS,
   REFRESH_TOKEN_TTL_SECONDS: process.env.REFRESH_TOKEN_TTL_SECONDS,
+  EMAIL_VERIFICATION_TTL_SECONDS:
+    process.env.EMAIL_VERIFICATION_TTL_SECONDS,
   ENCRYPTION_KEY: process.env.ENCRYPTION_KEY,
   APP_BASE_URL: process.env.APP_BASE_URL,
 
@@ -54,7 +60,6 @@ export const env = EnvSchema.parse({
   SMTP_HOST: process.env.SMTP_HOST,
   SMTP_PORT: process.env.SMTP_PORT,
   SMTP_USER: process.env.SMTP_USER,
-  SMTP_PASS: process.env.SMTP_PASS,
   SMTP_FROM: process.env.SMTP_FROM,
 
   RESEND_API_KEY: process.env.RESEND_API_KEY,
