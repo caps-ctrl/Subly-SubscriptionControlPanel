@@ -139,7 +139,7 @@ export default function ThemeToggle({
 
   return (
     <div className={className}>
-      <div className="relative rounded-2xl border border-zinc-200/70 bg-white/70 p-1 shadow-lg shadow-black/5 backdrop-blur supports-[backdrop-filter]:bg-white/60 dark:border-zinc-800/70 dark:bg-zinc-950/60">
+      <div className="relative rounded-2xl border border-zinc-200/70 bg-white/70 p-1 shadow-lg shadow-black/5 backdrop-blur supports-[backdrop-filter]:bg-white/60 min-w-[150px] dark:border-zinc-800/70 dark:bg-zinc-950/60">
         <div
           className="pointer-events-none absolute inset-y-1 w-[calc((100%-0.5rem)/3)] rounded-xl bg-zinc-950 transition-transform duration-200 ease-out dark:bg-white"
           style={{ transform: `translateX(${activeIndex * 100}%)` }}

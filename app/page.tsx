@@ -25,7 +25,7 @@ export default async function HomePage() {
               src="/heroNew.png"
               alt="Hero"
               layout="fill"
-              className="z-10 rounded-2xl object-contain"
+              className="z-10 rounded-2xl hidden sm:inline object-contain"
             />
           </div>
           <div className="absolute top-1/2 -right-40  z-1 -translate-y-1/2 object-cover rounded-2xl  w-[50%] h-[70%] ">
@@ -40,7 +40,7 @@ export default async function HomePage() {
           <div className="relative z-10 mx-auto max-w-6xl px-6 ">
             <div className="mt-16 grid gap-10 lg:grid-cols-2 lg:items-center">
               <div>
-                <h1 className="text-balance text-8xl font-bold leading-tight tracking-tight sm:text-5xl text-black dark:text-white drop-shadow-lg">
+                <h1 className="text-balance  text-xl font-bold leading-tight tracking-tight sm:text-5xl text-black dark:text-white drop-shadow-lg">
                   Ogarnij subskrypcje. Zobacz wydatki. Anuluj szybciej.
                 </h1>
 
@@ -93,6 +93,7 @@ export default async function HomePage() {
       <section>
         <Pricing user={user ? { plan: user.plan } : null} />
       </section>
+      <Footer />
     </>
   );
 }
