@@ -85,13 +85,13 @@ export default async function DashboardPage() {
       <div className="flex-1  ">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 h-full min-h-0">
           <div
-            className="row-span-2 bg-white  max-h-[100vh] dark:bg-black   p-1 border-zinc-200 rounded-lg dark:border-zinc-600 overflow-y-auto flex flex-col"
+            className="row-span-2 bg-white col-span-1  max-h-[100vh] dark:bg-black   p-1 border-zinc-200 rounded-lg dark:border-zinc-600 overflow-y-auto flex flex-col"
             id="subscriptions"
           >
             <SubsList formattedSubs={formattedSubs} />
           </div>
 
-          <div className="row-span-1 max-h-[50vh]">
+          <div className="row-span-1 col-span-1 max-h-[50vh]">
             <SubscriptionDiag subscriptions={formattedSubs} />
           </div>
 

@@ -16,7 +16,7 @@ export default function Pricing({ user }: PricingProps) {
   const premiumLabel = isPro ? "Masz już Premium" : "Kup Premium";
 
   return (
-    <section className="py-20 px-6 bg-white dark:bg-black text-zinc-900 dark:text-white">
+    <section className="py-20 px-6  text-zinc-900 dark:text-white">
       <div className="max-w-6xl mx-auto text-center mb-16">
         <h2 className="text-4xl font-bold mb-4">Wybierz swój plan</h2>
         <p className="text-zinc-500">

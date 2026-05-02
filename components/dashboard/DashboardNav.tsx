@@ -9,13 +9,21 @@ type Item = {
   icon: React.ReactNode;
 };
 
-function NavItem({ href, label, icon }: Item) {
+function NavItem({
+  href,
+  label,
+  icon,
+  onNavigate,
+}: Item & {
+  onNavigate?: () => void;
+}) {
   const pathname = usePathname();
   const active = pathname === href;
 
   return (
     <Link
       href={href}
+      onClick={onNavigate}
       aria-current={active ? "page" : undefined}
       className={[
         "group flex items-center gap-3 rounded-r-xl px-3 py-1 text-sm font-medium transition-colors",
@@ -39,7 +47,11 @@ function NavItem({ href, label, icon }: Item) {
   );
 }
 
-export default function DashboardNav() {
+export default function DashboardNav({
+  onNavigate,
+}: {
+  onNavigate?: () => void;
+}) {
   const items: Item[] = [
     {
       href: "/dashboard",
@@ -105,7 +117,7 @@ export default function DashboardNav() {
   return (
     <nav className="grid gap-1">
       {items.map((item) => (
-        <NavItem key={item.href} {...item} />
+        <NavItem key={item.href} {...item} onNavigate={onNavigate} />
       ))}
     </nav>
   );
