@@ -42,6 +42,7 @@ enum NotificationChannel {
 enum RefreshTokenType {
   AUTH
   GMAIL
+  GMAIL_SMTP
 }
 
 model User {

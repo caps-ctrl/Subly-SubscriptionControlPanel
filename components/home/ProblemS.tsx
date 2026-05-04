@@ -172,7 +172,7 @@ export default function ProblemS() {
               key={card.title}
               initial={{ opacity: 0, y: 40 }}
               animate={isInView ? { opacity: 1, y: 0 } : {}}
-              transition={{ duration: 0.45, delay: 1 + index * 0.08 }}
+              transition={{ duration: 0.45, delay: 0.36 + index * 0.08 }}
             >
               <CardProblem
                 title={card.title}

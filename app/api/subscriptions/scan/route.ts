@@ -6,6 +6,7 @@ import { withAuth } from "@/lib/auth/withAuth";
 import { prisma } from "@/lib/db/prisma";
 import { FREE_ACTIVE_SUBSCRIPTIONS_LIMIT } from "@/lib/billing/limits";
 import { getGmailForUser } from "@/lib/gmail/client";
+import { canReadGmail } from "@/lib/gmail/scopes";
 import { extractEmailText, getHeader } from "@/lib/gmail/message";
 import { extractSubscriptionsFromEmail } from "@/lib/openai/extractSubscriptions";
 
@@ -45,7 +46,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { gmail } = gmailCtx;
+    const { gmail, account } = gmailCtx;
+    if (!canReadGmail(account.scopes)) {
+      return NextResponse.json(
+        { error: "GMAIL_READ_SCOPE_REQUIRED" },
+        { status: 403 },
+      );
+    }
+
     const q =
       'newer_than:365d (subscription OR "your subscription" OR renewal OR "recurring" OR invoice OR receipt)';
 

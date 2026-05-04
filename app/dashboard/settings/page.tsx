@@ -13,6 +13,12 @@ import {
 import { Button } from "@/components/ui/Button";
 import { getServerUser } from "@/lib/auth/getServerUser";
 import { prisma } from "@/lib/db/prisma";
+import { env } from "@/lib/env";
+import {
+  canCreateGmailDrafts,
+  canReadGmail,
+  getGmailScopeLabel,
+} from "@/lib/gmail/scopes";
 import ThemeToggle from "@/components/ThemeToggle";
 import LogoutButton from "@/components/LogoutButton";
 import { ChangePasswordButton } from "@/components/settings/ChangePasswordButton";
@@ -204,12 +210,16 @@ export default async function DashboardSettingsPage() {
     );
   }
 
-  const [gmailAccount, billingSubscription, activeSubscriptionsCount] =
+  const smtpUser = env.SMTP_USER?.toLowerCase().trim() ?? null;
+  const showMailerControls =
+    Boolean(smtpUser) && user.email.toLowerCase().trim() === smtpUser;
+
+  const [gmailAccount, billingSubscription, activeSubscriptionsCount, mailerAccount] =
     await Promise.all([
       prisma.gmailAccount.findFirst({
         where: { userId: user.id },
         orderBy: { updatedAt: "desc" },
-        select: { gmailAddress: true, updatedAt: true },
+        select: { gmailAddress: true, updatedAt: true, scopes: true },
       }),
       prisma.userSubscription.findFirst({
         where: { userId: user.id },
@@ -224,12 +234,31 @@ export default async function DashboardSettingsPage() {
       prisma.subscription.count({
         where: { userId: user.id, status: "ACTIVE" },
       }),
+      showMailerControls && smtpUser
+        ? prisma.refreshToken.findFirst({
+            where: {
+              type: "GMAIL_SMTP",
+              providerEmail: smtpUser,
+              revokedAt: null,
+              encryptedToken: {
+                not: null,
+              },
+            },
+            orderBy: { updatedAt: "desc" },
+            select: { providerEmail: true, updatedAt: true },
+          })
+        : Promise.resolve(null),
     ]);
 
   const planCopy = getPlanCopy(user.plan);
   const billingState = getBillingState(billingSubscription?.status, user.plan);
   const hasBillingAccount = Boolean(billingSubscription?.stripeCustomerId);
-  const gmailConnected = Boolean(gmailAccount);
+  const gmailConnected = Boolean(gmailAccount && canReadGmail(gmailAccount.scopes));
+  const gmailCanCompose = Boolean(
+    gmailAccount && canCreateGmailDrafts(gmailAccount.scopes),
+  );
+  const gmailScopeLabel = getGmailScopeLabel(gmailAccount?.scopes);
+  const mailerConnected = Boolean(mailerAccount?.providerEmail);
 
   return (
     <section className="relative isolate px-4 py-6 sm:px-6 lg:px-8">
@@ -271,7 +300,7 @@ export default async function DashboardSettingsPage() {
                   </Button>
                 </Link>
 
-                <Link href="/api/gmail/connect">
+                <Link href="/api/gmail/connect?next=/dashboard/settings">
                   <Button variant="secondary" className="gap-2">
                     {gmailConnected
                       ? "Odśwież połączenie Gmail"
@@ -298,7 +327,7 @@ export default async function DashboardSettingsPage() {
                 value={gmailConnected ? "Połączony" : "Niepodłączony"}
                 hint={
                   gmailConnected
-                    ? (gmailAccount?.gmailAddress ?? "Konto aktywne")
+                    ? `${gmailAccount?.gmailAddress ?? "Konto aktywne"} • ${gmailScopeLabel}`
                     : "Brak autoryzacji"
                 }
               />
@@ -502,14 +531,24 @@ export default async function DashboardSettingsPage() {
                   value={formatDateTime(gmailAccount?.updatedAt)}
                 />
               </div>
+              <DetailRow
+                icon={<Shield className="h-4 w-4" />}
+                label="Zakres dostępu"
+                value={gmailScopeLabel}
+              />
             </div>
 
             <div className="mt-6 flex flex-wrap gap-3">
-              <Link href="/api/gmail/connect">
+              <Link href="/api/gmail/connect?next=/dashboard/settings">
                 <Button variant={gmailConnected ? "secondary" : "primary"}>
                   {gmailConnected ? "Połącz ponownie" : "Podłącz Gmail"}
                 </Button>
               </Link>
+              {gmailConnected && !gmailCanCompose ? (
+                <Link href="/api/gmail/connect-compose?next=/dashboard/settings">
+                  <Button variant="secondary">Włącz szkice Gmail</Button>
+                </Link>
+              ) : null}
               <Link href="/dashboard#subscriptions">
                 <Button variant="ghost" className="gap-2">
                   Otwórz listę subskrypcji
@@ -518,10 +557,56 @@ export default async function DashboardSettingsPage() {
               </Link>
             </div>
 
+            {showMailerControls ? (
+              <div className="mt-6 rounded-[24px] border border-zinc-200/70 bg-white/85 p-5 dark:border-zinc-800 dark:bg-zinc-950/80">
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <div className="text-sm font-semibold text-zinc-950 dark:text-zinc-50">
+                      Konto Nodemailera
+                    </div>
+                    <div className="mt-1 text-sm leading-7 text-zinc-600 dark:text-zinc-400">
+                      To połączenie jest osobne od kont użytkowników i używa pełnego
+                      dostępu Gmail tylko dla adresu skonfigurowanego jako
+                      `SMTP_USER`.
+                    </div>
+                  </div>
+
+                  <span className={statusBadgeClass(mailerConnected ? "emerald" : "zinc")}>
+                    {mailerConnected ? "Mailer gotowy" : "Mailer niepołączony"}
+                  </span>
+                </div>
+
+                <div className="mt-4 grid gap-3">
+                  <DetailRow
+                    icon={<Mail className="h-4 w-4" />}
+                    label="Adres mailera"
+                    value={smtpUser ?? "Brak SMTP_USER"}
+                    valueClassName="break-all"
+                  />
+                  <DetailRow
+                    icon={<CalendarClock className="h-4 w-4" />}
+                    label="Autoryzacja mailera"
+                    value={formatDateTime(mailerAccount?.updatedAt)}
+                  />
+                </div>
+
+                <div className="mt-4">
+                  <Link href="/api/gmail/connect-mailer?next=/dashboard/settings">
+                    <Button variant={mailerConnected ? "secondary" : "primary"}>
+                      {mailerConnected
+                        ? "Połącz mailer ponownie"
+                        : "Autoryzuj konto mailera"}
+                    </Button>
+                  </Link>
+                </div>
+              </div>
+            ) : null}
+
             <p className="mt-4 text-xs leading-6 text-zinc-500 dark:text-zinc-500">
-              Odłączenie konta Google nie jest jeszcze dostępne bezpośrednio w
-              aplikacji. W razie potrzeby możesz cofnąć dostęp z poziomu
-              ustawień bezpieczeństwa Google.
+              Autoryzacja Gmail działa etapami. Najpierw dajesz tylko odczyt do
+              wykrywania subskrypcji, a później możesz osobno rozszerzyć dostęp
+              o szkice wiadomości. Wysyłka przez Nodemailer nadal korzysta z
+              oddzielnej autoryzacji pełnego dostępu dla konta systemowego.
             </p>
           </div>
 

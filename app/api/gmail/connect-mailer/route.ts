@@ -1,8 +1,9 @@
 import { NextResponse, type NextRequest } from "next/server";
 
 import { withAuth } from "@/lib/auth/withAuth";
+import { env } from "@/lib/env";
 import { getGoogleAuthUrl } from "@/lib/gmail/oauth";
-import { GOOGLE_GMAIL_READONLY_SCOPES } from "@/lib/gmail/scopes";
+import { GOOGLE_GMAIL_MAILER_SCOPES } from "@/lib/gmail/scopes";
 import {
   GOOGLE_OAUTH_STATE_COOKIE,
   createGoogleOAuthState,
@@ -17,10 +18,11 @@ export async function GET(request: NextRequest) {
     request,
     async () => {
       const next = request.nextUrl.searchParams.get("next");
-      const oauthState = createGoogleOAuthState("connect", next);
+      const oauthState = createGoogleOAuthState("mailer", next);
       const authUrl = getGoogleAuthUrl(oauthState.nonce, {
-        scopes: GOOGLE_GMAIL_READONLY_SCOPES,
+        scopes: GOOGLE_GMAIL_MAILER_SCOPES,
         includeGrantedScopes: true,
+        loginHint: env.SMTP_USER ?? undefined,
         prompt: "consent",
       });
 

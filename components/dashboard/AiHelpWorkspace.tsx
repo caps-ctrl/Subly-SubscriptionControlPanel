@@ -7,6 +7,7 @@ import type { ApiSubscription } from "@/components/dashboard/types";
 import { formatDate, formatMoney } from "@/components/dashboard/utils";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
+import { getGmailErrorMessage } from "@/lib/gmail/errorMessages";
 
 type SavingsInsights = {
   summary: string;
@@ -145,10 +146,16 @@ function ToolBadge({
 export function AiHelpWorkspace({
   subscriptions,
   gmailAddress,
+  gmailConnected,
+  gmailCanCompose,
+  gmailScopeLabel,
   plan,
 }: {
   subscriptions: ApiSubscription[];
   gmailAddress: string | null;
+  gmailConnected: boolean;
+  gmailCanCompose: boolean;
+  gmailScopeLabel: string;
   plan: "FREE" | "PRO";
 }) {
   const router = useRouter();
@@ -187,6 +194,9 @@ export function AiHelpWorkspace({
 
   const selectedSubscription =
     subscriptions.find((sub) => sub.id === selectedSubscriptionId) ?? null;
+  const connectGmailHref = "/api/gmail/connect?next=/dashboard/aihelp";
+  const upgradeComposeHref =
+    "/api/gmail/connect-compose?next=/dashboard/aihelp";
 
   async function runSavingsInsights() {
     setSavingsLoading(true);
@@ -297,7 +307,9 @@ export function AiHelpWorkspace({
       } | null;
 
       if (!res.ok) {
-        setDraftStatus(data?.error ?? "Nie udało się utworzyć szkicu.");
+        setDraftStatus(
+          getGmailErrorMessage(data?.error) ?? "Nie udało się utworzyć szkicu.",
+        );
         return;
       }
 
@@ -328,11 +340,10 @@ export function AiHelpWorkspace({
       const data = (await res.json().catch(() => null)) as ScanSummary | null;
 
       if (!res.ok) {
-        if (data?.error === "GMAIL_NOT_CONNECTED") {
-          setScanError("Najpierw podłącz Gmail, żeby uruchomić skan.");
-        } else {
-          setScanError("Skan skrzynki nie powiódł się.");
-        }
+        setScanError(
+          getGmailErrorMessage(data?.error) ??
+            "Skan skrzynki nie powiódł się.",
+        );
         return;
       }
 
@@ -427,10 +438,10 @@ export function AiHelpWorkspace({
             />
             <StatCard
               label="Gmail"
-              value={gmailAddress ? "Połączony" : "Niepodłączony"}
+              value={gmailConnected ? "Połączony" : "Niepodłączony"}
               hint={
-                gmailAddress
-                  ? `Skan użyje skrzynki ${gmailAddress}.`
+                gmailConnected
+                  ? `Skan użyje skrzynki ${gmailAddress}. Zakres: ${gmailScopeLabel}.`
                   : "Połącz skrzynkę, a agent przeskanuje ostatnie maile rozliczeniowe."
               }
             />
@@ -831,13 +842,20 @@ export function AiHelpWorkspace({
                       <Button variant="ghost" onClick={copyGuide}>
                         Kopiuj instrukcję
                       </Button>
-                      {gmailAddress ? (
+                      {gmailCanCompose ? (
                         <Button variant="secondary" onClick={createDraft}>
                           Utwórz szkic w Gmail
                         </Button>
+                      ) : gmailConnected ? (
+                        <a
+                          href={upgradeComposeHref}
+                          className="inline-flex items-center justify-center rounded-xl bg-zinc-100 px-4 py-2 text-sm font-medium text-zinc-900 transition-colors hover:bg-zinc-200 dark:bg-zinc-900 dark:text-zinc-50 dark:hover:bg-zinc-800"
+                        >
+                          Włącz szkice Gmail
+                        </a>
                       ) : (
                         <a
-                          href="/api/gmail/connect"
+                          href={connectGmailHref}
                           className="inline-flex items-center justify-center rounded-xl bg-zinc-100 px-4 py-2 text-sm font-medium text-zinc-900 transition-colors hover:bg-zinc-200 dark:bg-zinc-900 dark:text-zinc-50 dark:hover:bg-zinc-800"
                         >
                           Podłącz Gmail do szkicu
@@ -872,7 +890,7 @@ export function AiHelpWorkspace({
                 </p>
               </div>
 
-              {gmailAddress ? (
+              {gmailConnected ? (
                 <Button
                   variant="primary"
                   onClick={runMailboxScan}
@@ -883,7 +901,7 @@ export function AiHelpWorkspace({
                 </Button>
               ) : (
                 <a
-                  href="/api/gmail/connect"
+                  href={connectGmailHref}
                   className="inline-flex items-center justify-center rounded-xl bg-black px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-zinc-800 dark:bg-white dark:text-black dark:hover:bg-zinc-200"
                 >
                   Podłącz Gmail
@@ -903,9 +921,9 @@ export function AiHelpWorkspace({
                 onChange={(event) => setMaxMessages(event.target.value)}
                 className="w-28"
               />
-              {gmailAddress ? (
+              {gmailConnected ? (
                 <div className="text-xs text-zinc-500 dark:text-zinc-400">
-                  Połączone konto: {gmailAddress}
+                  Połączone konto: {gmailAddress} • {gmailScopeLabel}
                 </div>
               ) : null}
             </div>

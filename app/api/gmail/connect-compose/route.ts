@@ -1,8 +1,9 @@
 import { NextResponse, type NextRequest } from "next/server";
 
 import { withAuth } from "@/lib/auth/withAuth";
+import { prisma } from "@/lib/db/prisma";
 import { getGoogleAuthUrl } from "@/lib/gmail/oauth";
-import { GOOGLE_GMAIL_READONLY_SCOPES } from "@/lib/gmail/scopes";
+import { GOOGLE_GMAIL_COMPOSE_SCOPES } from "@/lib/gmail/scopes";
 import {
   GOOGLE_OAUTH_STATE_COOKIE,
   createGoogleOAuthState,
@@ -15,13 +16,21 @@ export const runtime = "nodejs";
 export async function GET(request: NextRequest) {
   return withAuth(
     request,
-    async () => {
-      const next = request.nextUrl.searchParams.get("next");
-      const oauthState = createGoogleOAuthState("connect", next);
+    async (user) => {
+      const [next, existingAccount] = await Promise.all([
+        Promise.resolve(request.nextUrl.searchParams.get("next")),
+        prisma.gmailAccount.findFirst({
+          where: { userId: user.id },
+          orderBy: { updatedAt: "desc" },
+          select: { gmailAddress: true },
+        }),
+      ]);
+
+      const oauthState = createGoogleOAuthState("compose", next);
       const authUrl = getGoogleAuthUrl(oauthState.nonce, {
-        scopes: GOOGLE_GMAIL_READONLY_SCOPES,
+        scopes: GOOGLE_GMAIL_COMPOSE_SCOPES,
         includeGrantedScopes: true,
-        prompt: "consent",
+        loginHint: existingAccount?.gmailAddress ?? undefined,
       });
 
       const res = NextResponse.redirect(authUrl);

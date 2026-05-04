@@ -1,8 +1,6 @@
 import { env } from "@/lib/env";
 import nodemailer from "nodemailer";
 
-import { prisma } from "@/lib/db/prisma";
-import { decryptString } from "@/lib/crypto/encryption";
 import { getStoredOAuthRefreshToken } from "@/lib/auth/refreshToken";
 
 export type SendMailInput = {
@@ -26,26 +24,15 @@ async function getTransporter() {
   }
 
   const refreshToken = await getStoredOAuthRefreshToken({
-    type: "GMAIL",
+    type: "GMAIL_SMTP",
     providerEmail: env.SMTP_USER!,
   });
 
   if (!refreshToken) {
     throw new Error(
-      `Missing stored Gmail refresh token for SMTP_USER=${env.SMTP_USER}.`,
+      `Missing stored Gmail SMTP refresh token for SMTP_USER=${env.SMTP_USER}.`,
     );
   }
-
-  const gmailAccount = await prisma.gmailAccount.findFirst({
-    where: {
-      gmailAddress: env.SMTP_USER,
-    },
-    orderBy: { updatedAt: "desc" },
-    select: {
-      encryptedAccessToken: true,
-      accessTokenExpiresAt: true,
-    },
-  });
 
   return nodemailer.createTransport({
     host: env.SMTP_HOST,
@@ -57,10 +44,6 @@ async function getTransporter() {
       clientId: env.GOOGLE_CLIENT_ID,
       clientSecret: env.GOOGLE_CLIENT_SECRET,
       refreshToken,
-      accessToken: gmailAccount?.encryptedAccessToken
-        ? decryptString(gmailAccount.encryptedAccessToken)
-        : undefined,
-      expires: gmailAccount?.accessTokenExpiresAt?.getTime(),
     },
   });
 }

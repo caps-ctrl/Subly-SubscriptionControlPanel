@@ -1,6 +1,11 @@
 import { AiHelpWorkspace } from "@/components/dashboard/AiHelpWorkspace";
 import { getServerUser } from "@/lib/auth/getServerUser";
 import { prisma } from "@/lib/db/prisma";
+import {
+  canCreateGmailDrafts,
+  canReadGmail,
+  getGmailScopeLabel,
+} from "@/lib/gmail/scopes";
 
 export default async function AiHelpPage() {
   const user = await getServerUser();
@@ -22,7 +27,7 @@ export default async function AiHelpPage() {
     prisma.gmailAccount.findFirst({
       where: { userId: user.id },
       orderBy: { updatedAt: "desc" },
-      select: { gmailAddress: true },
+      select: { gmailAddress: true, scopes: true },
     }),
     prisma.subscription.findMany({
       where: { userId: user.id, status: "ACTIVE" },
@@ -52,10 +57,19 @@ export default async function AiHelpPage() {
     updatedAt: subscription.updatedAt.toISOString(),
   }));
 
+  const gmailConnected = Boolean(gmailAccount && canReadGmail(gmailAccount.scopes));
+  const gmailCanCompose = Boolean(
+    gmailAccount && canCreateGmailDrafts(gmailAccount.scopes),
+  );
+  const gmailScopeLabel = getGmailScopeLabel(gmailAccount?.scopes);
+
   return (
     <AiHelpWorkspace
       subscriptions={formattedSubscriptions}
       gmailAddress={gmailAccount?.gmailAddress ?? null}
+      gmailConnected={gmailConnected}
+      gmailCanCompose={gmailCanCompose}
+      gmailScopeLabel={gmailScopeLabel}
       plan={user.plan}
     />
   );

@@ -1,7 +1,13 @@
 import { google } from "googleapis";
 
 import { env } from "@/lib/env";
-import { GOOGLE_APP_SCOPES } from "@/lib/gmail/scopes";
+
+type GoogleAuthUrlOptions = {
+  scopes: readonly string[];
+  includeGrantedScopes?: boolean;
+  loginHint?: string;
+  prompt?: "consent" | "select_account";
+};
 
 export function getGoogleOAuth2Client() {
   if (!env.GOOGLE_CLIENT_ID || !env.GOOGLE_CLIENT_SECRET) {
@@ -17,12 +23,17 @@ export function getGoogleOAuth2Client() {
   );
 }
 
-export function getGoogleAuthUrl(state: string, scopes = GOOGLE_APP_SCOPES) {
+export function getGoogleAuthUrl(
+  state: string,
+  options: GoogleAuthUrlOptions,
+) {
   const oauth2 = getGoogleOAuth2Client();
   return oauth2.generateAuthUrl({
     access_type: "offline",
-    prompt: "consent",
-    scope: [...scopes],
+    include_granted_scopes: options.includeGrantedScopes,
+    login_hint: options.loginHint,
+    prompt: options.prompt,
+    scope: [...options.scopes],
     state,
   });
 }

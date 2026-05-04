@@ -3,6 +3,7 @@ import { z } from "zod";
 
 import { withAuth } from "@/lib/auth/withAuth";
 import { getGmailForUser } from "@/lib/gmail/client";
+import { canCreateGmailDrafts } from "@/lib/gmail/scopes";
 
 export const runtime = "nodejs";
 
@@ -31,13 +32,22 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { gmail } = (await getGmailForUser(user.id)) ?? {};
-    if (!gmail) {
+    const gmailCtx = await getGmailForUser(user.id);
+    if (!gmailCtx?.gmail) {
       return NextResponse.json(
         { error: "GMAIL_NOT_CONNECTED" },
         { status: 400 },
       );
     }
+
+    if (!canCreateGmailDrafts(gmailCtx.account.scopes)) {
+      return NextResponse.json(
+        { error: "GMAIL_COMPOSE_SCOPE_REQUIRED" },
+        { status: 403 },
+      );
+    }
+
+    const { gmail } = gmailCtx;
 
     const { to, subject, bodyText } = parsed.data;
     const raw = [

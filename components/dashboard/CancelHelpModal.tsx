@@ -8,16 +8,21 @@ import type {
 } from "@/components/dashboard/types";
 import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
+import { getGmailErrorMessage } from "@/lib/gmail/errorMessages";
 
 export function CancelHelpModal({
   subscription,
   guide,
   gmailConnected,
+  gmailCanCompose = gmailConnected,
+  composeUpgradeHref = "/api/gmail/connect-compose?next=/dashboard/aihelp",
   onClose,
 }: {
   subscription: ApiSubscription;
   guide: CancellationGuide;
   gmailConnected: boolean;
+  gmailCanCompose?: boolean;
+  composeUpgradeHref?: string;
   onClose: () => void;
 }) {
   const [draftStatus, setDraftStatus] = useState<string | null>(null);
@@ -57,7 +62,9 @@ export function CancelHelpModal({
         | { error?: string; draftId?: string | null }
         | null;
       if (!res.ok) {
-        setDraftStatus(data?.error ?? "DRAFT_FAILED");
+        setDraftStatus(
+          getGmailErrorMessage(data?.error) ?? "Nie udało się utworzyć szkicu.",
+        );
         return;
       }
       setDraftStatus(
@@ -112,10 +119,17 @@ export function CancelHelpModal({
                 {guide.email.bodyText}
               </pre>
               <div className="mt-3 flex flex-wrap gap-2">
-                {gmailConnected ? (
+                {gmailCanCompose ? (
                   <Button variant="secondary" onClick={createDraft}>
                     Utwórz szkic w Gmail
                   </Button>
+                ) : gmailConnected ? (
+                  <a
+                    href={composeUpgradeHref}
+                    className="inline-flex items-center justify-center rounded-xl bg-zinc-100 px-4 py-2 text-sm font-medium text-zinc-900 transition-colors hover:bg-zinc-200 dark:bg-zinc-900 dark:text-zinc-50 dark:hover:bg-zinc-800"
+                  >
+                    Włącz szkice Gmail
+                  </a>
                 ) : (
                   <Button variant="secondary" disabled>
                     Podłącz Gmail, aby utworzyć szkic
@@ -143,4 +157,3 @@ export function CancelHelpModal({
     </Modal>
   );
 }
-

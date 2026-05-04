@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 
 import { getGoogleAuthUrl } from "@/lib/gmail/oauth";
+import { GOOGLE_LOGIN_SCOPES } from "@/lib/gmail/scopes";
 import {
   GOOGLE_OAUTH_STATE_COOKIE,
   createGoogleOAuthState,
@@ -13,7 +14,10 @@ export const runtime = "nodejs";
 export async function GET(request: NextRequest) {
   const next = request.nextUrl.searchParams.get("next");
   const oauthState = createGoogleOAuthState("login", next);
-  const authUrl = getGoogleAuthUrl(oauthState.nonce);
+  const authUrl = getGoogleAuthUrl(oauthState.nonce, {
+    scopes: GOOGLE_LOGIN_SCOPES,
+    prompt: "select_account",
+  });
 
   const res = NextResponse.redirect(authUrl);
   res.cookies.set(
